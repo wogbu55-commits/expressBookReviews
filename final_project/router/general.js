@@ -25,126 +25,132 @@ public_users.post("/register", (req,res) => {
 //Function simulating async retrieval with callback
 function getBooksCallback(callback) {
     setTimeout(() => {
-        if (books) {
-            callback(null, books);
-        } else {
-            callback("No books found", null);
-        }
+        if (books) callback(null, books);
+        else callback("No books found", null);
     }, 100);
+}
+
+function getBooks() {
+    return new Promise((resolve, reject) => {
+        getBooksCallback((err, data) => (err ? reject(err) : resolve(data)));
+    });
 }
 
 // Get the book list available in the shop
-public_users.get('/',function (req, res) {
+public_users.get('/books', async (req, res) => {
   
-  getBooksCallback((err,data) => {
-    if (err) {
-        return res.status(404).json({ message: err});
+    try {
+        const allBooks = await getBooks();
+        res.status(200).json(allBooks);
+    } catch (error) {
+        res.status(500).json({ message: error });
     }
-    res.status(200).json(data);
-  });
 });
 
-function getBooksByISBN(isbn,callback) {
+function getBooksByISBNCallback(isbn,callback) {
     setTimeout(() => {
-        if (books[isbn]) {
-            callback(null, books[isbn]);
-        } else {
-            callback("Book not found", null);
-        }
+        if (books[isbn]) callback(null, books[isbn]);
+        else callback("Book not found", null);
     }, 100);
+}
+
+function getBookByISBN(isbn) {
+    return new Promise((resolve, reject) => {
+        getBooksByISBNCallback(isbn, (err, data) => err ? reject(err) : resolve(data));
+    });
 }
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
+public_users.get('/isbn/:isbn',async (req, res) => {
   
-    const isbn = req.params.isbn;
-    getBooksByISBN(isbn, (err,book) => {
-        if (err) {
-            return res.status(404).json({ message: err});
-        }
-        res.status(200).json(book);
-    });
+    try {
+        const book = await getBookByISBN(req.params.isbn);
+        req.status(200).json(book);
+    } catch (error) {
+        res.status(404).json({ message: error });
+    }
  });
 
- function getBooksByAuthor(author, callback) {
+ function getBooksByAuthorCallback(author, callback) {
     setTimeout(() => {
         const results = [];
         Object.keys(books).forEach(isbn => {
-            if (books[isbn].author.toLowerCase() === author) {
+            if (books[isbn].author.toLowerCase() === author)
                 results.push(books[isbn]);
-            }
         });
-        if (results.length > 0) {
-            callback(null, results);
-        } else {
-            callback("No books found by this author", null);
-        }
+        if (results.length > 0) callback(null, results);
+        else callback("No books found by this author", null);
     }, 100);
+ }
+
+ function getBooksByAuthor(author) {
+    return new Promise((resolve, reject) => {
+        getBooksByAuthorCallback(author, (err, data) => err ? reject(err) : resolve(data));
+    })
  }
   
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  
-    const author = req.params.author;
+public_users.get('/author/:author',async (req, res) => {
 
-    getBooksByAuthor(author, (err,books) => {
-        if (err) {
-            return res.status(404).json({ message: err});
-        }
-        res.status(200).json(books);
-    })
+    try {
+        const booksByAuthor = await getBooksByAuthor(req.params.author);
+        res.status(200).json(booksByAuthor);
+    } catch (error) {
+        res.status(404).json({ message: error});
+    }
 });
 
-function getBooksByTitle(title,callback) {
+function getBooksByTitleCallback(title,callback) {
     setTimeout(() => {
         const results =[];
         Object.keys(books).forEach(isbn => {
-            if (books[isbn].title.toLowerCase() === title) {
+            if (books[isbn].title.toLowerCase() === title) 
                 results.push(books[isbn]);
-            }
         });
-        if (results.length > 0) {
-            callback(null, results);
-        } else {
-            callback("No books found with this title", null);
-        }
+        if (results.length > 0) callback(null, results);
+        else callback("No books found with this title", null);
     }, 100);
 }
+
+function getBooksByTitle(title) {
+    return new Promise((resolve, reject) => {
+        getBooksByTitleCallback(title, (err, data) => err ? reject(err) : resolve(data));
+    });
+ }
+
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-  
-    const title = req.params.title;
-    getBooksByTitle(title, (err,books) => {
-        if (err) {
-            return res.status(404).json({ message: err});
+public_users.get('/title/:title',async (req, res) => {
+        try {
+            const booksByTitle = await getBooksByTitle(req.params.title);
+            res.status(200).json(booksByTitle);
+        } catch (error) {
+            res.status(404).json({ message: error });
         }
-        res.status(200).json(books);
-    })
 });
 
-function getBookReview(isbn, callback){
+function getBookReviewCallback(isbn, callback){
     setTimeout(() => {
-        const book = books[isbn];
-        if (book && book.reviews) {
+        if (books[isbn] && books[isbn].reviews)
             callback(null, books.reviews);
-        } else if (book) {
-            callback(null, {});
-        } else {
-            callback("Books not found", null);
-        }
+        else if (book) callback(null, {});
+        else callback("Books not found", null);
     }, 100);
+}
+
+function getReviewsByISBN(isbn) {
+    return new Promise((resolve, reject) => {
+        getBookReviewCallback(isbn, (err, data) => err ? reject(err) : resolve(data));
+    });
 }
 
 //  Get book review
-public_users.get('/review/:isbn',function (req, res) {
-    const isbn = req.params.isbn;
-
-    getBookReview(isbn, (err,reviews) => {
-        if (err) {
-            return res.status(404).json({ message: err});
-        }
+public_users.get('/review/:isbn',async (req, res)=> {
+    try {
+        const reviews = await getReviewsByISBN(req.params.isbn);
         res.status(200).json(reviews);
-    });
+    } catch (error) {
+        res.status(404).json({ message: error});
+    }
 });
 
 module.exports.general = public_users;

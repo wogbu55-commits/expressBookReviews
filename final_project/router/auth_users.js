@@ -73,7 +73,7 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     }
     // Initialize reviews object if not present
     if(!book.reviews) {
-        book.reviews = {};
+        book.reviews = {}
     }
 
     //Add or update review for this user
