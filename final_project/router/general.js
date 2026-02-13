@@ -65,7 +65,7 @@ public_users.get('/isbn/:isbn',async (req, res) => {
   
     try {
         const book = await getBookByISBN(req.params.isbn);
-        req.status(200).json(book);
+        res.status(200).json(book);
     } catch (error) {
         res.status(404).json({ message: error });
     }
